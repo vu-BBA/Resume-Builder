@@ -1,50 +1,45 @@
-const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const Resume = require('./models/Resume');
 
-const app = express();
-const resumeRoutes = require('./routes/resume');
+const connectDB = async () => {
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGODB_URI);
+  }
+};
 
-app.use(cors());
-app.use(express.json());
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-// API Routes
-app.use('/api/resumes', resumeRoutes);
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Resume Builder API is running' });
-});
+  try {
+    await connectDB();
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  const __dirname_root = path.resolve();
-  app.use(express.static(path.join(__dirname_root, 'frontends', 'dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname_root, 'frontends', 'dist', 'index.html'));
-  });
-}
-
-const PORT = process.env.PORT || 5000;
-
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/resume-builder')
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-      });
+    if (req.url === '/api/health' && req.method === 'GET') {
+      return res.status(200).json({ status: 'ok', message: 'API is running' });
     }
-  })
-  .catch((err) => {
-    console.warn('⚠️ MongoDB connection error:', err.message);
-    if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT} (Disconnected from MongoDB)`);
-      });
-    }
-  });
 
-module.exports = app;
+    if (req.url === '/api/resumes' && req.method === 'POST') {
+      const resume = new Resume(req.body);
+      const savedResume = await resume.save();
+      return res.status(201).json(savedResume);
+    }
+
+    if (req.url.startsWith('/api/resumes/') && req.method === 'GET') {
+      const id = req.url.split('/')[3];
+      const resume = await Resume.findById(id);
+      if (!resume) {
+        return res.status(404).json({ error: 'Resume not found' });
+      }
+      return res.status(200).json(resume);
+    }
+
+    return res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
