@@ -7,6 +7,8 @@ const ResumeSchema = new mongoose.Schema({
     phone: { type: String },
     title: { type: String }
   },
+  profileImage: { type: String },
+  template: { type: String, default: 'classic' },
   summary: { type: String },
   experience: [{
     company: { type: String },
