@@ -53,7 +53,7 @@ function ResumeBuilder() {
         fontSize,
         fontFamily
       }
-      const API_URL = import.meta.env.VITE_API_URL || 'https://resume-builder-pink-nu.vercel.app/api';
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
       const res = await axios.post(`${API_URL}/resumes`, payload)
       setSubmittedId(res.data._id)
       alert('Resume saved successfully!')
