@@ -21,7 +21,11 @@ const ResumeSchema = new mongoose.Schema({
     year: { type: String }
   }],
   skills: [{ type: String }],
-  themeColor: { type: String, default: '#3b82f6' }
+  themeColor: { type: String, default: '#6366f1' },
+  headingColor: { type: String, default: '#0f172a' },
+  textColor: { type: String, default: '#475569' },
+  fontSize: { type: Number, default: 16 },
+  fontFamily: { type: String, default: "'Outfit', sans-serif" }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Resume', ResumeSchema);
